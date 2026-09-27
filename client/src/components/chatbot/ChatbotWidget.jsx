@@ -148,6 +148,8 @@ export default function ChatbotWidget() {
         ageTone: activeAgeProfile.badge,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         quickFollowUps: [
+          '🔍 Weather-Risk Filtering',
+          '⚠️ At-risk only (Rain > 50%)',
           'What should I do today?',
           'Can I go for a run today?',
           'Do I need an umbrella?',
@@ -270,6 +272,8 @@ export default function ChatbotWidget() {
         ageTone: activeAgeProfile.badge,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         quickFollowUps: [
+          '🔍 Weather-Risk Filtering',
+          '⚠️ At-risk only (Rain > 50%)',
           'What should I do today?',
           'Can I go for a run today?',
           'Do I need an umbrella?',

@@ -2,6 +2,8 @@ import React from 'react';
 import { Sparkles } from 'lucide-react';
 
 const DEFAULT_CHIPS = [
+  { label: '🔍 Weather-Risk Filtering', query: 'Filter activities based on weather risk / indoor vs outdoor' },
+  { label: '⚠️ At-risk only (Rain > 50%)', query: 'Selecting "At-risk only" shows activities with rain >50% and hides the others.' },
   { label: '🏃 Can I run today?', query: 'Can I go for a run today?' },
   { label: '☂️ Need an umbrella?', query: 'Do I need an umbrella today?' },
   { label: '👕 What should I wear?', query: 'What should I wear today?' },
