@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getChatbotPreferences } from './chatbot/chatbotPreferences';
 import {
   Compass,
   MapPin,
@@ -18,6 +19,7 @@ import { useWeather } from '../context/WeatherContext';
 
 export default function ActivityPlanner() {
   const { currentWeather } = useWeather();
+  const { ageGroup } = getChatbotPreferences();
   const [filter, setFilter] = useState('all'); // 'all' | 'outdoor' | 'indoor' | 'at_risk'
 
   if (!currentWeather || !currentWeather.activities) return null;
@@ -141,6 +143,12 @@ export default function ActivityPlanner() {
                 </div>
 
                 <div className="activity-title" style={{ marginTop: '0.4rem' }}>{item.title}</div>
+                <div className="activity-age-tip" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>{
+                  ageGroup === 'child' ? '👶 Kid-friendly spot with safe play area.' :
+                  ageGroup === 'teen' ? '🎧 Trendy hangout popular among teens.' :
+                  ageGroup === 'senior' ? '🧓 Gentle walk with benches and shade.' :
+                  '💼 Ideal for adults, good for work-life balance.'
+                }</div>
 
                 <div className="activity-location">
                   <MapPin size={13} />
