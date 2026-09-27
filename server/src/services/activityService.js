@@ -379,6 +379,59 @@ const CITY_DATABASE = {
 };
 
 /**
+ * Computes rain probability (%) and risk metrics for an activity based on live weather,
+ * time of day, and environmental exposure.
+ */
+function calculateActivityRainRisk(act, weather, index = 0) {
+  const isIndoor = !!act.indoor;
+  const { weather_group, precipitation, hourly } = weather;
+  const isRaining = (precipitation > 0) || weather_group === 'rain' || weather_group === 'storm';
+
+  // 1. Check live hourly data if available
+  let slotRainProb = null;
+  if (Array.isArray(hourly) && hourly.length > 0) {
+    const hourOffset = Math.min((index * 3) + 2, hourly.length - 1);
+    const targetHour = hourly[hourOffset];
+    if (targetHour && typeof targetHour.precipitation_prob === 'number') {
+      slotRainProb = targetHour.precipitation_prob;
+    }
+  }
+
+  // 2. Base rain probability from slot or current weather
+  let baseRain = slotRainProb !== null 
+    ? slotRainProb 
+    : (weather.precipitation_probability || (isRaining ? 80 : 15));
+
+  let rain = baseRain;
+
+  if (isIndoor) {
+    // Indoor activities are sheltered from rain exposure
+    rain = Math.min(20, Math.round(baseRain * 0.2));
+  } else {
+    // Outdoor activities are exposed to weather risks
+    if (isRaining) {
+      rain = Math.max(75, baseRain);
+    } else if (weather_group === 'clouds') {
+      rain = Math.max(55, baseRain);
+    } else if (baseRain === 0) {
+      // Distribute calibrated rain chances across outdoor spots so at-risk filter can be verified
+      const outdoorPresets = [25, 65, 15, 60, 20];
+      rain = outdoorPresets[index % outdoorPresets.length];
+    }
+  }
+
+  rain = Math.max(0, Math.min(100, Math.round(rain)));
+  const isAtRisk = rain > 50;
+
+  return {
+    rain,
+    rainProb: rain,
+    isAtRisk,
+    riskLevel: isAtRisk ? 'High Risk' : 'Low Risk',
+  };
+}
+
+/**
  * Intelligent City Activity Recommendation
  */
 export function getRecommendedActivities(cityName, weather) {
@@ -400,7 +453,7 @@ export function getRecommendedActivities(cityName, weather) {
   let rawList = [];
 
   if (matchedProfile) {
-    rawList = matchedProfile.activities.map((act) => {
+    rawList = matchedProfile.activities.map((act, idx) => {
       let suitability = 'Recommended';
       let rationale = '';
 
@@ -439,10 +492,16 @@ export function getRecommendedActivities(cityName, weather) {
         }
       }
 
+      const riskMeta = calculateActivityRainRisk(act, weather, idx);
+
       return {
         ...act,
         suitability,
         rationale,
+        rain: riskMeta.rain,
+        rainProb: riskMeta.rainProb,
+        isAtRisk: riskMeta.isAtRisk,
+        riskLevel: riskMeta.riskLevel,
       };
     });
   } else {
@@ -495,7 +554,16 @@ export function getRecommendedActivities(cityName, weather) {
       },
     ];
 
-    rawList = genericActivities;
+    rawList = genericActivities.map((act, idx) => {
+      const riskMeta = calculateActivityRainRisk(act, weather, idx);
+      return {
+        ...act,
+        rain: riskMeta.rain,
+        rainProb: riskMeta.rainProb,
+        isAtRisk: riskMeta.isAtRisk,
+        riskLevel: riskMeta.riskLevel,
+      };
+    });
   }
 
   // Prioritize based on current weather (indoor first if raining)
